@@ -59,7 +59,7 @@ extend(). extend() works by doing a deep copy of the parent object, so be sure
 to define all the fields, checks, etc. you want shared with your children
 objects **before** calling extend()
 
-    User = Honor.extend 'User',
+    User = Honor.extend
       label: Honor.field 'label'
       email: Honor.field 'email'
       password: Honor.field 'password', minlen: 8 # override...
@@ -232,8 +232,11 @@ that measures wether the date is "young" by a factor of certain years, i.e. we
 want to be able to write something like:
 
     Youngster = Honor.extend
-    name: Honor.field('label')
-    dob: required: true, moment: true, young: 25
+      name: Honor.field 'label'
+      dob:
+        required: true
+        moment: true
+        young: 25
 
 Let's get down to business and write our test, shall we?
 
@@ -276,7 +279,7 @@ same name.
 You can choose to run the test after or before a certain test however. To do
 this, use:
 
-    # let's move 'mycheck' just before the 'email' check
+    # let us move 'mycheck' just before the 'email' check
     Honor.moveBefore 'email', 'mycheck'
 
 And of course its counter part function:
