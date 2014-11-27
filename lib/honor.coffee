@@ -61,7 +61,6 @@ valOrEval = (check, callback) ->
     return callback null, check.checkValue
 
 
-
 Create = (aSchema) ->
   self = {}
   self.schema = if aSchema then aSchema else {}
@@ -243,6 +242,7 @@ Create = (aSchema) ->
       else
         nextCheck.checkValue = checkValue
         MakeAsync nextCheck.checkFunction, nextCheck, (error, result) ->
+
           if error
             newError[nextCheck.modelAttribute] = {}
             newError[nextCheck.modelAttribute][nextCheck.checkNameInitial] = error
@@ -254,7 +254,10 @@ Create = (aSchema) ->
             newError[nextCheck.modelAttribute][nextCheck.checkNameInitial] = true
             return self.validateChecklist checklist, newError, callback
 
+          nextCheck.modelValue = nextCheck.model[nextCheck.modelAttribute]
           return self.validateChecklist checklist, newError, callback
+
+  self.blindJudge = -> 313
 
   return self
 
@@ -265,15 +268,21 @@ Honor = Create()
 
 # trim: <value>
 # ----------------------------------------------------------------------------
-# Gets rid of leading and trailing edges
+# Gets rid of whitespace leading and trailing edges on string values.
 Honor.check 'trim', (c) ->
+
+  # if not trim: true, then skip
   return true unless c.checkValue
-  if typeof(c.modelValue) is 'string'
-    value = c.modelValue
-    value = value.replace /^\s+/, ''
-    value = value.replace /^\s+/, ''
-    c.model[c.modelAttribute] = value
-    c.modelValue = value
+
+  # if the model value is not a string,
+  # there is nothing to trim
+  return true if typeof(c.modelValue) isnt 'string'
+
+  # now trim the model value and return
+  value = c.modelValue
+  value = value.replace /^\s+/, ''
+  value = value.replace /^\s+/, ''
+  c.model[c.modelAttribute] = value
   return true
 
 
@@ -281,9 +290,12 @@ Honor.check 'trim', (c) ->
 # --------------------------- fit e-------------------------------------------------
 # Sets the field to <value> unless it's already defined
 Honor.check 'default', (c) ->
-  if c.modelValue is undefined
-    c.model[c.modelAttribute] = c.checkValue
-    c.modelValue = c.model[c.modelAttribute]
+
+  # if the model value is not undefined or null, then we're done.
+  return true if c.modelValue is undefined or c.modelValue is null
+
+  # replace the model attribute with the check value, and return
+  c.model[c.modelAttribute] = c.checkValue
   return true
 
 
@@ -292,44 +304,64 @@ Honor.check 'default', (c) ->
 # Coerces the field to a given object / type
 Honor.check 'coerce', (c) ->
   switch c.checkValue
-    when 'string' then c.model[c.modelAttribute] = String c.model[c.modelAttribute]
-    when 'number' then c.model[c.modelAttribute] = Number c.model[c.modelAttribute]
+    when 'string'  then c.model[c.modelAttribute] = String c.model[c.modelAttribute]
+    when 'number'  then c.model[c.modelAttribute] = Number c.model[c.modelAttribute]
     when 'boolean' then c.model[c.modelAttribute] = Boolean c.model[c.modelAttribute]
-    when 'moment' then c.model[c.modelAttribute] = moment c.model[c.modelAttribute]
+    when 'moment'  then c.model[c.modelAttribute] = moment c.model[c.modelAttribute]
   return true
 
 
-# undefined: true|false
+# defined: true|false
 # ----------------------------------------------------------------------------
-# is this field undefined?
+# is this field defined?
 Honor.check 'defined', (c) ->
+
+  # if not defined: true, then skip
   return true unless c.checkValue
-  return false if c.modelValue is undefined
-  return true
+
+  return c.modelValue isnt undefined
 
 
 # null: true|false
 # ----------------------------------------------------------------------------
 # is this field null?
 Honor.check 'null', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
-  return true if c.modelValue is null
-  return false
+
+  return c.modelValue is null
 
 
 # required: true|false
 # ----------------------------------------------------------------------------
 # is this field required, i.e. not undefined, not null, and not empty?
 Honor.check 'required', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
-  return c.modelValue isnt undefined and c.modelValue isnt null and String(c.modelValue) isnt ''
+
+  # 'required' means not undefined, not null, and not empty
+  return false if c.modelValue is undefined
+  return false if c.modelValue is null
+  return false if String(c.modelValue) is ''
+  return true
 
 
 # uuid: true|false
 # ----------------------------------------------------------------------------
 # must this field look like an uuid?
 Honor.check 'uuid', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 
@@ -337,7 +369,16 @@ Honor.check 'uuid', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like a moment?
 Honor.check 'moment', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return moment(c.modelValue).isValid()
 
 
@@ -345,7 +386,16 @@ Honor.check 'moment', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like an email?
 Honor.check 'email', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 
@@ -353,7 +403,16 @@ Honor.check 'email', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like an integer?
 Honor.check 'integer', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^[-]?\d+$/
 
 
@@ -361,24 +420,46 @@ Honor.check 'integer', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like an boolean?
 Honor.check 'boolean', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # does it "look like" true?
   if String(c.modelValue).match /^(on|yes|true|1)$/i
     c.model[c.modelAttribute] = true
-    c.modelValue = true
     return true
+
+  # does it "look like" false?
   else if /^(off|no|false|0)$/i
     c.model[c.modelAttribute] = false
     c.modelValue = false
     return true
+
+  # else it's probably nonsense, fail the test.
   else
     return false
 
 
 # hex: true|false
 # ----------------------------------------------------------------------------
-# must this field look like an hex number?
+# must this field look like an hex positive integer?
 Honor.check 'hex', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^[a-fA-F0-9]+$/
   
 
@@ -386,7 +467,16 @@ Honor.check 'hex', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like an float number?
 Honor.check 'float', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^[-]?[0-9]*[\.]?[0-9]+$/
 
 
@@ -394,6 +484,14 @@ Honor.check 'float', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like <regex>?
 Honor.check 'like', (c) ->
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # if the modelValue is undefined, well
   return String(c.modelValue).match c.checkValue
 
 
@@ -401,7 +499,16 @@ Honor.check 'like', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like an ipv4?
 Honor.check 'ipv4', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^((([01]?[0-9]{1,2})|(2[0-4][0-9])|(25[0-5]))[.]){3}(([0-1]?[0-9]{1,2})|(2[0-4][0-9])|(25[0-5]))$/
 
 
@@ -409,7 +516,16 @@ Honor.check 'ipv4', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like a host?
 Honor.check 'host', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?)*\.?$/
 
 
@@ -417,7 +533,16 @@ Honor.check 'host', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like a phone number?
 Honor.check 'phone', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match /^\+?\d+$/
 
 
@@ -425,7 +550,16 @@ Honor.check 'phone', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like a url?
 Honor.check 'url', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return validUrl.isUri String(c.modelValue)
 
 
@@ -433,22 +567,40 @@ Honor.check 'url', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like a sip address?
 Honor.check 'sip', (c) ->
+
+  # if not null: true, then skip
   return true unless c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
   return String(c.modelValue).match String(value).match(/^\+?(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))(:\d+)?$/)
 
 
 # maxlen: <value>
 # ----------------------------------------------------------------------------
-# Make sure this field doesn't exceed <value> chars
+# Make sure this field length doesn't exceed <value> chars
 Honor.check 'maxlen', (c) ->
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # if c.checkValue doesn't look like a number
+  # then we should fail the test.
   len = Number c.checkValue
   return false if String(len) is 'NaN'
 
+  # try to make the comparison, return false if that fails.
   retVal = false
   try
     retVal = c.modelValue.length <= len
   catch err
-    console.error "[maxlen]", err
     return false
 
   return retVal
@@ -456,16 +608,25 @@ Honor.check 'maxlen', (c) ->
 
 # minlen: <value>
 # ----------------------------------------------------------------------------
-# Make sure this field doesn't exceed <value> chars
+# Make sure this field length is at least <value> chars
 Honor.check 'minlen', (c) ->
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # if c.checkValue doesn't look like a number
+  # then we should fail the test.
   len = Number c.checkValue
   return false if String(len) is 'NaN'
 
+  # try to make the comparison, return false if that fails.
   retVal = false
   try
-    retVal = c.modelValue.length >= len
+    retVal = c.modelValue.length <= len
   catch err
-    console.error "[minlen]", err
     return false
 
   return retVal
@@ -475,27 +636,53 @@ Honor.check 'minlen', (c) ->
 # ----------------------------------------------------------------------------
 # Make sure this field doesn't exceed <value> chars
 Honor.check 'maxval', (c) ->
-  c.checkValue = Number c.checkValue
-  return false if String(c.checkValue) is 'NaN'
-  c.modelValue = Number c.modelValue
-  return false if String(c.modelValue) is 'NaN'
-  return c.modelValue <= c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # if c.checkValue doesn't look like a number
+  # then we should fail the test.
+  checkValue = Number c.checkValue
+  return false if String(checkValue) is 'NaN'
+
+  # if c.modelValue doesn't look like a number
+  # then we should fail the test.
+  modelValue = Number c.modelValue
+  return false if String(modelValue) is 'NaN'
+
+  return modelValue <= checkValue
 
 
 # minval: <value>
 # ----------------------------------------------------------------------------
 # Make sure this field doesn't exceed <value> chars
 Honor.check 'minval', (c) ->
-  c.checkValue = Number c.checkValue
-  return false if String(c.checkValue) is 'NaN'
-  c.modelValue = Number c.modelValue
-  return false if String(c.modelValue) is 'NaN'
-  return c.modelValue <= c.checkValue
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # if c.checkValue doesn't look like a number
+  # then we should fail the test.
+  checkValue = Number c.checkValue
+  return false if String(checkValue) is 'NaN'
+
+  # if c.modelValue doesn't look like a number
+  # then we should fail the test.
+  modelValue = Number c.modelValue
+  return false if String(modelValue) is 'NaN'
+
+  return modelValue <= checkValue
 
 
 # equals: <value>
 # ----------------------------------------------------------------------------
-# Make sure this field doesn't exceed <value> chars
+# Isn't that self-explanatory?
 Honor.check 'equals', (c) ->
   return c.modelValue is c.checkValue
 
@@ -516,22 +703,61 @@ Honor.check 'in', (c) ->
 # ----------------------------------------------------------------------------
 # checks if this field starts with <value>
 Honor.check 'starts', (c) ->
-  return true unless c.checkValue
-  return String(c.modelValue).indexOf(c.checkValue) is 0
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # on the other hand if the check value is undefined or null
+  # then the test is complete non sense, and we should fail
+  return false unless c.checkValue is undefined
+  return false unless c.checkValue is null
+
+  checkVal = String c.checkValue
+  return String(c.modelValue).indexOf(checkVal) is 0
 
 
 # contains: <value>
 # ----------------------------------------------------------------------------
 # checks if this field contains <value>
 Honor.check 'contains', (c) ->
-  return true unless c.checkValue
-  return String(c.modelValue).indexOf(c.checkValue) >= 0
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # on the other hand if the check value is undefined or null
+  # then the test is complete non sense, and we should fail
+  return false unless c.checkValue is undefined
+  return false unless c.checkValue is null
+
+  checkVal = String c.checkValue
+  return String(c.modelValue).indexOf(checkVal) >= 0
 
 
 # schema: <value>
 # ----------------------------------------------------------------------------
 # checks if this field implements the given schema
 Honor.check 'schema', (c, callback) ->
+
+  # if the model value is undefined or null
+  # we should succeed the test. defined: true and not_null: true
+  # are meant to be testing for this.
+  return true unless c.modelValue is undefined
+  return true unless c.modelValue is null
+
+  # Is the object that we're being passed one of our objects?
+  # Attempt to figure out if it implements a very improbable
+  # function returning an even more improbable value.
+  checkValue = c.checkValue
+  return false unless _.isObject checkValue
+  return false unless checkValue.blindJudge
+  return false unless checkValue.blindJudge() is 313
+
   return true unless c.checkValue
   schema = c.checkValue
   model  = c.modelValue
@@ -541,6 +767,7 @@ Honor.check 'schema', (c, callback) ->
     else
       return callback null, model
   return Infinity
+
 
 # schema: <value>
 # ----------------------------------------------------------------------------

@@ -295,7 +295,7 @@ such as disk, networks, or database. `honor` has you covered!
 
 The only trick is that `honor` needs a way to distinguish between asynchronous
 and synchronous functions. If your function returns `Infinity`, then
-`honor`will consider it to be asynchronous.
+`honor` will consider it to be asynchronous.
 
 Let's write a test to make sure a URL actually exists.
 
@@ -321,14 +321,14 @@ Let's write a test to make sure a URL actually exists.
       
       # return check result!
       request modelValue, (error, response, body) ->
-      if error
-        callback error, null
-        return
-      
+        if error
+          callback error, null
+          return
+        
         if not String(response.statusCode).match /^2/
           callback "didn't get 2XX", null
           return
-        
+          
         # yes, you must return the model
         # which you may have changed
         return callback null, c.model
