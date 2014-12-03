@@ -193,14 +193,14 @@ Create = (aSchema) ->
           check.checkNameInitial = checkNameInitial
           checklist.push check
 
-    _.each self.constraints, (check, checkName) ->
-      check = _.clone check
-      check.model = model
-      check.honor = self
-      check.modelAttribute = 'constraint'
-      check.checkName = checkName
-      check.checkNameInitial = checkName
-      checklist.push check
+    _.each self.constraints, (checkFunction, checkName) ->
+      checklist.push 
+        checkName: checkName
+        checkFunction: checkFunction
+        checkNameInitial: checkName
+        model: model
+        honor: self
+        modelAttribute: 'constraint'
 
     self.validateChecklist checklist, {}, (err) ->
       return callback err, null if err

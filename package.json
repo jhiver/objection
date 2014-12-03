@@ -1,7 +1,7 @@
 {
   "name": "honor",
   "description": "Simple and powerful NodeJS data validation library",
-  "version": "0.1.8",
+  "version": "0.2.1",
   "keywords": [
     "data",
     "validation",
@@ -13,12 +13,10 @@
       "email": "jhiver@gmail.com"
     }
   ],
-  "repositories": [
-    {
+  "repository": {
       "type": "git",
       "url": "https://github.com/jhiver/objection.git"
-    }
-  ],
+  },
   "licenses": [
     {
       "name": "MIT",
