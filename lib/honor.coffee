@@ -72,6 +72,19 @@ Create = (aSchema) ->
   self._field = {}
 
 
+  # TEST ME, god damn it!
+  self.errorsToList = (err, prefix) ->
+    prefix or= []
+    result = []
+    if _.isObject err
+      _.each err, (val, key) ->
+        subList = self.errorsToList val, [prefix..., key]
+        _.each subList, (item) -> result.push item
+    else if err
+      return [ prefix.join '_' ]
+    else
+      return []
+
   self.define = (fieldName, miniSchema) -> self._field[fieldName] = miniSchema
 
 
@@ -212,7 +225,7 @@ Create = (aSchema) ->
   self.validateChecklist = (checklist, newError, callback) ->
     if checklist.length is 0
       if _.isEmpty newError
-        return callback null
+        return callback()
       else
         return callback newError
 
@@ -233,7 +246,7 @@ Create = (aSchema) ->
       # let's return an error and jump to the next check.
       if error
         newError[nextCheck.modelAttribute] = {}
-        newError[nextCheck.modelAttribute][nextCheck.checkNameInitial] = 'eval: ' + error
+        newError[nextCheck.modelAttribute][nextCheck.checkNameInitial] = error
         return self.validateChecklist checklist, newError, callback
 
       # otherwise, let's replace the function with its return value, and then we
@@ -281,7 +294,7 @@ Honor.check 'trim', (c) ->
   # now trim the model value and return
   value = c.modelValue
   value = value.replace /^\s+/, ''
-  value = value.replace /^\s+/, ''
+  value = value.replace /\s+$/, ''
   c.model[c.modelAttribute] = value
   return true
 
@@ -292,7 +305,7 @@ Honor.check 'trim', (c) ->
 Honor.check 'default', (c) ->
 
   # if the model value is not undefined or null, then we're done.
-  return true if c.modelValue is undefined or c.modelValue is null
+  return true if c.modelValue isnt undefined and c.modelValue isnt null
 
   # replace the model attribute with the check value, and return
   c.model[c.modelAttribute] = c.checkValue
@@ -393,8 +406,8 @@ Honor.check 'email', (c) ->
   # if the model value is undefined or null
   # we should succeed the test. defined: true and not_null: true
   # are meant to be testing for this.
-  return true unless c.modelValue is undefined
-  return true unless c.modelValue is null
+  return true if c.modelValue is undefined
+  return true if c.modelValue is null
 
   return String(c.modelValue).match /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 

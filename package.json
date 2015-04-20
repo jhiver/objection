@@ -1,7 +1,7 @@
 {
   "name": "honor",
   "description": "Simple and powerful NodeJS data validation library",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "keywords": [
     "data",
     "validation",
