@@ -6,6 +6,55 @@ _ = require 'underscore'
 
 describe 'basic_tests', ->
 
+  it 'minval', (done) ->
+    schema = Honor.extend
+      field:
+        required: false
+        integer: true
+        minval: 10
+    schema.validate { field: 9 }, (err, res) ->
+      if err
+        return done()
+      else
+        return done "integer passes where it should not"
+
+  it 'minval #2', (done) ->
+    schema = Honor.extend
+      field:
+        required: false
+        integer: true
+        minval: 10
+    schema.validate { field: 11 }, (err, res) ->
+      if err
+        return done "integer passes where it should not"
+      else
+        return done()
+
+  it 'maxval', (done) ->
+    schema = Honor.extend
+      field:
+        required: false
+        integer: true
+        maxval: 10
+    schema.validate { field: 11 }, (err, res) ->
+      if err
+        return done()
+      else
+        return done "integer passes where it should not"
+
+  it 'maxval #2', (done) ->
+    schema = Honor.extend
+      field:
+        required: false
+        integer: true
+        maxval: 10
+    schema.validate { field: 9 }, (err, res) ->
+      if err
+        return done "integer passes where it should not"
+      else
+        return done()
+
+
   it 'integer', (done) ->
     schema = Honor.extend
       field:

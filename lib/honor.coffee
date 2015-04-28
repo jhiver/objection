@@ -416,7 +416,7 @@ Honor.check 'email', (c) ->
 # ----------------------------------------------------------------------------
 # must this field look like an integer?
 Honor.check 'integer', (c) ->
-  
+
   # if not null: true, then skip
   return true unless c.checkValue
 
@@ -652,8 +652,8 @@ Honor.check 'maxval', (c) ->
   # if the model value is undefined or null
   # we should succeed the test. defined: true and not_null: true
   # are meant to be testing for this.
-  return true unless c.modelValue is undefined
-  return true unless c.modelValue is null
+  return true if c.modelValue is undefined
+  return true if c.modelValue is null
 
   # if c.checkValue doesn't look like a number
   # then we should fail the test.
@@ -676,8 +676,8 @@ Honor.check 'minval', (c) ->
   # if the model value is undefined or null
   # we should succeed the test. defined: true and not_null: true
   # are meant to be testing for this.
-  return true unless c.modelValue is undefined
-  return true unless c.modelValue is null
+  return true if c.modelValue is undefined
+  return true if c.modelValue is null
 
   # if c.checkValue doesn't look like a number
   # then we should fail the test.
@@ -689,7 +689,7 @@ Honor.check 'minval', (c) ->
   modelValue = Number c.modelValue
   return false if String(modelValue) is 'NaN'
 
-  return modelValue <= checkValue
+  return modelValue >= checkValue
 
 
 # equals: <value>
