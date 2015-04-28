@@ -6,6 +6,17 @@ _ = require 'underscore'
 
 describe 'basic_tests', ->
 
+  it 'integer', (done) ->
+    schema = Honor.extend
+      field:
+        required: false
+        integer: true
+    schema.validate { field: "foo" }, (err, res) ->
+      if err
+        return done()
+      else
+        return done "integer passes where it should not"
+
   it 'trim', (done) ->
     schema = Honor.extend field: trim: true
     schema.validate { field: " foo " }, (err, res) ->
