@@ -417,9 +417,6 @@ Honor.check 'email', (c) ->
 # must this field look like an integer?
 Honor.check 'integer', (c) ->
 
-  # if not null: true, then skip
-  return true unless c.checkValue
-
   # if the model value is undefined or null
   # we should succeed the test. defined: true and not_null: true
   # are meant to be testing for this.
